@@ -1,0 +1,62 @@
+package com.bagro.service;
+
+import com.bagro.dto.request.RegisterUserRequest;
+import com.bagro.dto.response.UserResponse;
+import com.bagro.entity.Role;
+import com.bagro.entity.User;
+import com.bagro.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class UserService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public String createUser(RegisterUserRequest request) {
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("El username ya existe");
+        }
+
+        User user = User.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.valueOf(request.getRole().toUpperCase()))
+                .active(request.isActive())
+                .build();
+
+        userRepository.save(user);
+
+        return "Usuario creado correctamente";
+    }
+
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(user -> new UserResponse(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getRole().name(),
+                        user.isActive()
+                ))
+                .toList();
+    }
+
+    public String changeUserStatus(Long id, boolean active) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        user.setActive(active);
+        userRepository.save(user);
+
+        return active ? "Usuario activado correctamente" : "Usuario desactivado correctamente";
+    }
+}
