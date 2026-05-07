@@ -33,6 +33,7 @@ public class LoginService {
             throw new RuntimeException("Usuario inactivo");
         }
 
+        // Aquí usamos PasswordEncoder para comparar la contraseña encriptada
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Contraseña incorrecta");
         }
@@ -51,9 +52,15 @@ public class LoginService {
     }
 
     public String registerUser(RegisterUserRequest request) {
+        // Verificamos si el nombre de usuario ya existe antes de registrar
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("El nombre de usuario ya existe");
+        }
+
+        // Creamos el usuario y encriptamos la contraseña antes de guardarla
         User user = User.builder()
                 .username(request.getUsername())
-                .password(passwordEncoder.encode(request.getPassword()))
+                .password(passwordEncoder.encode(request.getPassword()))  // Contraseña encriptada
                 .role(Role.valueOf(request.getRole().toUpperCase()))
                 .active(request.isActive())
                 .build();

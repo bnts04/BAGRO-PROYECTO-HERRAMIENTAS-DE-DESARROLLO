@@ -8,8 +8,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
-@EnableMethodSecurity
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
@@ -24,7 +24,10 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/register").permitAll()
+                        .requestMatchers("/login", "/register").permitAll() // Login y register permitidos
+                        .requestMatchers("/api/menu").hasRole("ADMIN") // Solo admin puede acceder al menu
+                        .requestMatchers("/api/pagos").hasAnyRole("ADMIN", "RRHH") // RRHH y Admin pueden hacer pagos
+                        .requestMatchers("/api/pagos/**").hasRole("TRABAJADOR") // Trabajadores pueden ver sus pagos
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
