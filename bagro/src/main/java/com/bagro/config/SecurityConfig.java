@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/register").permitAll() // Login y register permitidos
                         .requestMatchers("/api/menu").hasRole("ADMIN") // Solo admin puede acceder al menu
+                        .requestMatchers("/api/pagos/kpis/**").hasAnyRole("ADMIN", "RRHH")
                         .requestMatchers("/api/pagos").hasAnyRole("ADMIN", "RRHH") // RRHH y Admin pueden hacer pagos
                         .requestMatchers("/api/pagos/**").hasRole("TRABAJADOR") // Trabajadores pueden ver sus pagos
                         .anyRequest().authenticated()

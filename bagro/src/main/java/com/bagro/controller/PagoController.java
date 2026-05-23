@@ -2,6 +2,7 @@ package com.bagro.controller;
 
 import com.bagro.dto.request.PagoRequest;
 import com.bagro.dto.response.PagoResponse;
+import com.bagro.dto.response.PlanillaKpiResponse;
 import com.bagro.service.PagoService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -28,5 +29,14 @@ public class PagoController {
     @PreAuthorize("hasRole('TRABAJADOR')")
     public List<PagoResponse> listarPagos(@RequestParam String username) {
         return pagoService.listarPagos(username);
+    }
+
+    @GetMapping("/kpis/planilla")
+    @PreAuthorize("hasAnyRole('ADMIN','RRHH')")
+    public PlanillaKpiResponse obtenerKpisPlanilla(
+            @RequestParam int mes,
+            @RequestParam int anio
+    ) {
+        return pagoService.obtenerKpisPlanilla(mes, anio);
     }
 }

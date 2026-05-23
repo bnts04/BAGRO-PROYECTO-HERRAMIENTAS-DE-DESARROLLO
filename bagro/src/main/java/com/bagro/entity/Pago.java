@@ -21,6 +21,10 @@ public class Pago {
     @Column(nullable = false)
     private LocalDate fecha;
 
+    private Integer mes;
+
+    private Integer anio;
+
     @Column(nullable = false)
     private Double sueldoBase;
 

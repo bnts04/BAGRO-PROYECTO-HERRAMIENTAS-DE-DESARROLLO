@@ -11,4 +11,8 @@ public class PagoRequest {
     private Double horasExtra;
     private Double bonos;
     private Double descuentos;
+
+    // Mes y año al que corresponde el pago
+    private Integer mes;
+    private Integer anio;
 }
