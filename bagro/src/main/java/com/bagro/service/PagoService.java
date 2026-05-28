@@ -35,6 +35,10 @@ public class PagoService {
         Integer mesPago = request.getMes() != null ? request.getMes() : hoy.getMonthValue();
         Integer anioPago = request.getAnio() != null ? request.getAnio() : hoy.getYear();
 
+        if (pagoRepository.existsByEmpleadoAndMesAndAnio(empleado, mesPago, anioPago)) {
+            throw new RuntimeException("Ya existe un pago registrado para este trabajador en ese mes y año");
+        }
+
         Double totalNeto = request.getSueldoBase()
                 + (request.getHorasExtra() != null ? request.getHorasExtra() : 0)
                 + (request.getBonos() != null ? request.getBonos() : 0)
@@ -55,6 +59,39 @@ public class PagoService {
         pagoRepository.save(pago);
 
         return "Pago registrado correctamente";
+    }
+
+    public String editarPago(Long id, PagoRequest request) {
+        Pago pago = pagoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pago no encontrado"));
+
+        Empleado empleado = pago.getEmpleado();
+
+        Integer mesPago = request.getMes() != null ? request.getMes() : pago.getMes();
+        Integer anioPago = request.getAnio() != null ? request.getAnio() : pago.getAnio();
+
+        if (pagoRepository.existsByEmpleadoAndMesAndAnioAndIdNot(empleado, mesPago, anioPago, id)) {
+            throw new RuntimeException("Ya existe otro pago registrado para este trabajador en ese mes y año");
+        }
+
+        Double sueldoBase = request.getSueldoBase();
+        Double horasExtra = request.getHorasExtra() != null ? request.getHorasExtra() : 0;
+        Double bonos = request.getBonos() != null ? request.getBonos() : 0;
+        Double descuentos = request.getDescuentos() != null ? request.getDescuentos() : 0;
+
+        Double totalNeto = sueldoBase + horasExtra + bonos - descuentos;
+
+        pago.setMes(mesPago);
+        pago.setAnio(anioPago);
+        pago.setSueldoBase(sueldoBase);
+        pago.setHorasExtra(horasExtra);
+        pago.setBonos(bonos);
+        pago.setDescuentos(descuentos);
+        pago.setTotalNeto(totalNeto);
+
+        pagoRepository.save(pago);
+
+        return "Pago actualizado correctamente";
     }
 
     public List<PagoResponse> listarPagos(String username) {

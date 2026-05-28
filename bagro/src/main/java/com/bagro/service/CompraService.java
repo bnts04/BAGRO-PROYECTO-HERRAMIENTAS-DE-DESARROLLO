@@ -10,6 +10,7 @@ import com.bagro.entity.Proveedor;
 import com.bagro.repository.CompraRepository;
 import com.bagro.repository.ProveedorRepository;
 import org.springframework.stereotype.Service;
+import com.bagro.dto.response.CompraKpiResponse;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -88,4 +89,47 @@ public class CompraService {
                 ))
                 .toList();
     }
+    public List<CompraResponse> filtrarComprasPorFecha(LocalDate desde, LocalDate hasta) {
+
+        return compraRepository.findByFechaBetween(desde, hasta)
+                .stream()
+                .map(c -> new CompraResponse(
+                        c.getId(),
+                        c.getFecha().toString(),
+                        c.getProveedor().getRazonSocial(),
+                        c.getTotal(),
+                        c.getDetalles()
+                                .stream()
+                                .map(d -> new DetalleCompraResponse(
+                                        d.getNombreProducto(),
+                                        d.getCantidad(),
+                                        d.getPrecioUnitario(),
+                                        d.getSubtotal()
+                                ))
+                                .toList()
+                ))
+                .toList();
+    }
+
+    public CompraKpiResponse obtenerKpisCompras(LocalDate desde, LocalDate hasta) {
+
+        List<Compra> compras = compraRepository.findByFechaBetween(desde, hasta);
+
+        double totalCompras = compras.stream()
+                .mapToDouble(Compra::getTotal)
+                .sum();
+
+        int cantidadCompras = compras.size();
+
+        double promedioPorCompra = cantidadCompras == 0
+                ? 0
+                : totalCompras / cantidadCompras;
+
+        return new CompraKpiResponse(
+                totalCompras,
+                cantidadCompras,
+                promedioPorCompra
+        );
+    }
+
 }

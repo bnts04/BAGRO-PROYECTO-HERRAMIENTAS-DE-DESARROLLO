@@ -29,4 +29,16 @@ public class ProveedorController {
     public List<ProveedorResponse> listarProveedores() {
         return proveedorService.listarProveedores();
     }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','COMPRAS')")
+    public String editarProveedor(@PathVariable Long id, @RequestBody ProveedorRequest request) {
+        return proveedorService.editarProveedor(id, request);
+    }
+
+    @PatchMapping("/{id}/desactivar")
+    @PreAuthorize("hasAnyRole('ADMIN','COMPRAS')")
+    public String desactivarProveedor(@PathVariable Long id) {
+        return proveedorService.desactivarProveedor(id);
+    }
 }

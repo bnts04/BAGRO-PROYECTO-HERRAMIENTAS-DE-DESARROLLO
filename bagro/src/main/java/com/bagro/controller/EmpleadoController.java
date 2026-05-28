@@ -29,4 +29,16 @@ public class EmpleadoController {
     public List<EmpleadoResponse> listarEmpleados() {
         return empleadoService.listarEmpleados();
     }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','RRHH')")
+    public String editarEmpleado(@PathVariable Long id, @RequestBody EmpleadoRequest request) {
+        return empleadoService.editarEmpleado(id, request);
+    }
+
+    @PatchMapping("/{id}/desactivar")
+    @PreAuthorize("hasAnyRole('ADMIN','RRHH')")
+    public String desactivarEmpleado(@PathVariable Long id) {
+        return empleadoService.desactivarEmpleado(id);
+    }
 }

@@ -1,11 +1,13 @@
 package com.bagro.controller;
 
 import com.bagro.dto.request.CompraRequest;
+import com.bagro.dto.response.CompraKpiResponse;
 import com.bagro.dto.response.CompraResponse;
 import com.bagro.service.CompraService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -28,5 +30,29 @@ public class CompraController {
     @PreAuthorize("hasAnyRole('ADMIN','COMPRAS')")
     public List<CompraResponse> listarCompras() {
         return compraService.listarCompras();
+    }
+
+    @GetMapping("/filtrar")
+    @PreAuthorize("hasAnyRole('ADMIN','COMPRAS')")
+    public List<CompraResponse> filtrarComprasPorFecha(
+            @RequestParam String desde,
+            @RequestParam String hasta
+    ) {
+        return compraService.filtrarComprasPorFecha(
+                LocalDate.parse(desde),
+                LocalDate.parse(hasta)
+        );
+    }
+
+    @GetMapping("/kpis")
+    @PreAuthorize("hasAnyRole('ADMIN','COMPRAS')")
+    public CompraKpiResponse obtenerKpisCompras(
+            @RequestParam String desde,
+            @RequestParam String hasta
+    ) {
+        return compraService.obtenerKpisCompras(
+                LocalDate.parse(desde),
+                LocalDate.parse(hasta)
+        );
     }
 }

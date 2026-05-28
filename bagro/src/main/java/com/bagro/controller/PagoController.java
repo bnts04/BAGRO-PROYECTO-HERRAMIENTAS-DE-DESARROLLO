@@ -39,4 +39,9 @@ public class PagoController {
     ) {
         return pagoService.obtenerKpisPlanilla(mes, anio);
     }
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','RRHH')")
+    public String editarPago(@PathVariable Long id, @RequestBody PagoRequest request) {
+        return pagoService.editarPago(id, request);
+    }
 }

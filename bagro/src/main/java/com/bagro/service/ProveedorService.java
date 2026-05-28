@@ -49,6 +49,31 @@ public class ProveedorService {
         return "Proveedor registrado correctamente con datos de SUNAT";
     }
 
+    public String editarProveedor(Long id, ProveedorRequest request) {
+        Proveedor proveedor = proveedorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+
+        proveedor.setTipoProducto(request.getTipoProducto());
+        proveedor.setEstado(EstadoProveedor.valueOf(request.getEstado().toUpperCase()));
+        proveedor.setObservacion(request.getObservacion());
+        proveedor.setActivo(request.isActivo());
+
+        proveedorRepository.save(proveedor);
+
+        return "Proveedor actualizado correctamente";
+    }
+
+    public String desactivarProveedor(Long id) {
+        Proveedor proveedor = proveedorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+
+        proveedor.setActivo(false);
+
+        proveedorRepository.save(proveedor);
+
+        return "Proveedor desactivado correctamente";
+    }
+
     public List<ProveedorResponse> listarProveedores() {
 
         return proveedorRepository.findAll()

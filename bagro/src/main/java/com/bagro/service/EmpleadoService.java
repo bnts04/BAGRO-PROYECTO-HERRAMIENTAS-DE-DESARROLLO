@@ -78,6 +78,35 @@ public class EmpleadoService {
         return "Empleado y usuario creados correctamente con datos de RENIEC";
     }
 
+    public String editarEmpleado(Long id, EmpleadoRequest request) {
+        Empleado empleado = empleadoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+
+        empleado.setCargo(request.getCargo());
+        empleado.setArea(request.getArea());
+        empleado.setSueldoBase(request.getSueldoBase());
+
+        empleadoRepository.save(empleado);
+
+        return "Empleado actualizado correctamente";
+    }
+
+    public String desactivarEmpleado(Long id) {
+        Empleado empleado = empleadoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+
+        empleado.setActivo(false);
+
+        if (empleado.getUser() != null) {
+            empleado.getUser().setActive(false);
+            userRepository.save(empleado.getUser());
+        }
+
+        empleadoRepository.save(empleado);
+
+        return "Empleado desactivado correctamente";
+    }
+
     public List<EmpleadoResponse> listarEmpleados() {
         return empleadoRepository.findAll()
                 .stream()
