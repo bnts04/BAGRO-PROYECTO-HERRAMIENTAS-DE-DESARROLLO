@@ -3,7 +3,11 @@ package com.bagro.controller;
 import com.bagro.dto.request.PagoRequest;
 import com.bagro.dto.response.PagoResponse;
 import com.bagro.dto.response.PlanillaKpiResponse;
+import com.bagro.service.PagoPdfService;
 import com.bagro.service.PagoService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,9 +18,11 @@ import java.util.List;
 public class PagoController {
 
     private final PagoService pagoService;
+    private final PagoPdfService pagoPdfService;
 
-    public PagoController(PagoService pagoService) {
+    public PagoController(PagoService pagoService, PagoPdfService pagoPdfService) {
         this.pagoService = pagoService;
+        this.pagoPdfService = pagoPdfService;
     }
 
     @PostMapping
@@ -39,9 +45,21 @@ public class PagoController {
     ) {
         return pagoService.obtenerKpisPlanilla(mes, anio);
     }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','RRHH')")
     public String editarPago(@PathVariable Long id, @RequestBody PagoRequest request) {
         return pagoService.editarPago(id, request);
+    }
+
+    @GetMapping("/{id}/boleta")
+    @PreAuthorize("hasAnyRole('ADMIN','RRHH','TRABAJADOR')")
+    public ResponseEntity<byte[]> generarBoletaPago(@PathVariable Long id) {
+        byte[] pdf = pagoPdfService.generarBoletaPago(id);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=boleta-pago-" + id + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

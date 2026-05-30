@@ -3,7 +3,11 @@ package com.bagro.controller;
 import com.bagro.dto.request.CompraRequest;
 import com.bagro.dto.response.CompraKpiResponse;
 import com.bagro.dto.response.CompraResponse;
+import com.bagro.service.CompraPdfService;
 import com.bagro.service.CompraService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,9 +19,11 @@ import java.util.List;
 public class CompraController {
 
     private final CompraService compraService;
+    private final CompraPdfService compraPdfService;
 
-    public CompraController(CompraService compraService) {
+    public CompraController(CompraService compraService, CompraPdfService compraPdfService) {
         this.compraService = compraService;
+        this.compraPdfService = compraPdfService;
     }
 
     @PostMapping
@@ -54,5 +60,16 @@ public class CompraController {
                 LocalDate.parse(desde),
                 LocalDate.parse(hasta)
         );
+    }
+
+    @GetMapping("/{id}/comprobante")
+    @PreAuthorize("hasAnyRole('ADMIN','COMPRAS')")
+    public ResponseEntity<byte[]> generarComprobanteCompra(@PathVariable Long id) {
+        byte[] pdf = compraPdfService.generarComprobanteCompra(id);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=comprobante-compra-" + id + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }
