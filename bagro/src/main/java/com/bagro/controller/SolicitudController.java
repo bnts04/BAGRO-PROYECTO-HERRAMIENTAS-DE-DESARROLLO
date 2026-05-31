@@ -45,4 +45,10 @@ public class SolicitudController {
                                    @RequestBody SolicitudRevisionRequest request) {
         return solicitudService.revisarSolicitud(id, request);
     }
+
+    @GetMapping("/filtrar")
+    @PreAuthorize("hasAnyRole('ADMIN','RRHH')")
+    public List<SolicitudResponse> filtrarSolicitudesPorEstado(@RequestParam String estado) {
+        return solicitudService.filtrarSolicitudesPorEstado(estado);
+    }
 }

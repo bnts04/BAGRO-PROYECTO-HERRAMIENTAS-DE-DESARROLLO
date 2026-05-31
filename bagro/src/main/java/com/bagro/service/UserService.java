@@ -15,10 +15,14 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditoriaService auditoriaService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       AuditoriaService auditoriaService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditoriaService = auditoriaService;
     }
 
     public String createUser(RegisterUserRequest request) {
@@ -34,6 +38,13 @@ public class UserService {
                 .build();
 
         userRepository.save(user);
+
+        auditoriaService.registrar(
+                "USUARIOS",
+                "CREAR USUARIO",
+                "Se creó el usuario " + user.getUsername()
+                        + " con rol " + user.getRole().name()
+        );
 
         return "Usuario creado correctamente";
     }
@@ -56,6 +67,14 @@ public class UserService {
 
         user.setActive(active);
         userRepository.save(user);
+
+        auditoriaService.registrar(
+                "USUARIOS",
+                active ? "ACTIVAR USUARIO" : "DESACTIVAR USUARIO",
+                "Se " + (active ? "activó" : "desactivó")
+                        + " el usuario " + user.getUsername()
+                        + " con rol " + user.getRole().name()
+        );
 
         return active ? "Usuario activado correctamente" : "Usuario desactivado correctamente";
     }

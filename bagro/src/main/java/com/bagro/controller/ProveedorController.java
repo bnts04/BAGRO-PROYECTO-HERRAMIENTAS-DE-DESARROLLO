@@ -41,4 +41,10 @@ public class ProveedorController {
     public String desactivarProveedor(@PathVariable Long id) {
         return proveedorService.desactivarProveedor(id);
     }
+
+    @GetMapping("/filtrar")
+    @PreAuthorize("hasAnyRole('ADMIN','COMPRAS')")
+    public List<ProveedorResponse> filtrarProveedoresPorEstado(@RequestParam boolean activo) {
+        return proveedorService.filtrarProveedoresPorEstado(activo);
+    }
 }

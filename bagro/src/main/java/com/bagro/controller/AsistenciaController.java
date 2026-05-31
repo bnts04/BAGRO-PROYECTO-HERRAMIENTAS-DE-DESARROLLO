@@ -41,4 +41,10 @@ public class AsistenciaController {
     public List<AsistenciaResponse> listarAsistencias() {
         return asistenciaService.listarAsistencias();
     }
+
+    @GetMapping("/filtrar")
+    @PreAuthorize("hasAnyRole('ADMIN','RRHH')")
+    public List<AsistenciaResponse> filtrarAsistenciasPorFecha(@RequestParam String fecha) {
+        return asistenciaService.filtrarAsistenciasPorFecha(fecha);
+    }
 }

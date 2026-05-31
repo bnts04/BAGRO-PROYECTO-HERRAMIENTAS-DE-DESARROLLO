@@ -37,6 +37,9 @@ public class Pago {
     @Column(nullable = false)
     private Double totalNeto;
 
+    @Enumerated(EnumType.STRING)
+    private EstadoPago estado;
+
     @ManyToOne
     @JoinColumn(name = "empleado_id", nullable = false)
     private Empleado empleado;

@@ -29,6 +29,9 @@ public class Compra {
     @Column(nullable = false)
     private Double total;
 
+    @Enumerated(EnumType.STRING)
+    private EstadoCompra estado;
+
     @OneToMany(mappedBy = "compra", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleCompra> detalles;
 }

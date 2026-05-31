@@ -101,4 +101,21 @@ public class AsistenciaService {
                 ))
                 .toList();
     }
+
+    public List<AsistenciaResponse> filtrarAsistenciasPorFecha(String fecha) {
+        LocalDate fechaFiltro = LocalDate.parse(fecha);
+
+        return asistenciaRepository.findByFechaOrderByIdDesc(fechaFiltro)
+                .stream()
+                .map(a -> new AsistenciaResponse(
+                        a.getId(),
+                        a.getFecha().toString(),
+                        a.getHoraEntrada() != null ? a.getHoraEntrada().toString() : null,
+                        a.getHoraSalida() != null ? a.getHoraSalida().toString() : null,
+                        a.getEstado().name(),
+                        a.getEmpleado().getNombres() + " " + a.getEmpleado().getApellidos(),
+                        a.getEmpleado().getDni()
+                ))
+                .toList();
+    }
 }

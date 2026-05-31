@@ -21,15 +21,18 @@ public class EmpleadoService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ReniecClient reniecClient;
+    private final AuditoriaService auditoriaService;
 
     public EmpleadoService(EmpleadoRepository empleadoRepository,
                            UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
-                           ReniecClient reniecClient) {
+                           ReniecClient reniecClient,
+                           AuditoriaService auditoriaService) {
         this.empleadoRepository = empleadoRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.reniecClient = reniecClient;
+        this.auditoriaService = auditoriaService;
     }
 
     public String crearEmpleado(EmpleadoRequest request) {
@@ -75,6 +78,12 @@ public class EmpleadoService {
 
         empleadoRepository.save(empleado);
 
+        auditoriaService.registrar(
+                "EMPLEADOS",
+                "CREAR EMPLEADO",
+                "Se creó el empleado " + nombres + " " + apellidos + " con DNI " + request.getDni()
+        );
+
         return "Empleado y usuario creados correctamente con datos de RENIEC";
     }
 
@@ -87,6 +96,12 @@ public class EmpleadoService {
         empleado.setSueldoBase(request.getSueldoBase());
 
         empleadoRepository.save(empleado);
+
+        auditoriaService.registrar(
+                "EMPLEADOS",
+                "EDITAR EMPLEADO",
+                "Se editó el empleado ID " + id + " con DNI " + empleado.getDni()
+        );
 
         return "Empleado actualizado correctamente";
     }
@@ -104,11 +119,34 @@ public class EmpleadoService {
 
         empleadoRepository.save(empleado);
 
+        auditoriaService.registrar(
+                "EMPLEADOS",
+                "DESACTIVAR EMPLEADO",
+                "Se desactivó el empleado ID " + id + " con DNI " + empleado.getDni()
+        );
+
         return "Empleado desactivado correctamente";
     }
 
     public List<EmpleadoResponse> listarEmpleados() {
         return empleadoRepository.findAll()
+                .stream()
+                .map(e -> new EmpleadoResponse(
+                        e.getId(),
+                        e.getDni(),
+                        e.getNombres(),
+                        e.getApellidos(),
+                        e.getCargo(),
+                        e.getArea(),
+                        e.getSueldoBase(),
+                        e.isActivo(),
+                        e.getUser() != null ? e.getUser().getUsername() : null
+                ))
+                .toList();
+    }
+
+    public List<EmpleadoResponse> filtrarEmpleadosPorEstado(boolean activo) {
+        return empleadoRepository.findByActivo(activo)
                 .stream()
                 .map(e -> new EmpleadoResponse(
                         e.getId(),

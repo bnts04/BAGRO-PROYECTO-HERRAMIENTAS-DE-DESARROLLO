@@ -15,5 +15,6 @@ public class CompraResponse {
     private String fecha;
     private String proveedor;
     private Double total;
+    private String estadoCompra;
     private List<DetalleCompraResponse> productos;
 }

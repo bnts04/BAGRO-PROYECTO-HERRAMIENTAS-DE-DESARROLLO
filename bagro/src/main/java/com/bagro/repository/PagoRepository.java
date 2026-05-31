@@ -11,5 +11,8 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     List<Pago> findByEmpleado(Empleado empleado);
 
     boolean existsByEmpleadoAndMesAndAnio(Empleado empleado, Integer mes, Integer anio);
+
     boolean existsByEmpleadoAndMesAndAnioAndIdNot(Empleado empleado, Integer mes, Integer anio, Long id);
+
+    List<Pago> findByMesAndAnio(Integer mes, Integer anio);
 }

@@ -41,4 +41,10 @@ public class EmpleadoController {
     public String desactivarEmpleado(@PathVariable Long id) {
         return empleadoService.desactivarEmpleado(id);
     }
+
+    @GetMapping("/filtrar")
+    @PreAuthorize("hasAnyRole('ADMIN','RRHH')")
+    public List<EmpleadoResponse> filtrarEmpleadosPorEstado(@RequestParam boolean activo) {
+        return empleadoService.filtrarEmpleadosPorEstado(activo);
+    }
 }

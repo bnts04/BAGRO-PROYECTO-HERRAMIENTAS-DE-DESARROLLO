@@ -73,6 +73,15 @@ public class SolicitudService {
                 .toList();
     }
 
+    public List<SolicitudResponse> filtrarSolicitudesPorEstado(String estado) {
+        EstadoSolicitud estadoSolicitud = EstadoSolicitud.valueOf(estado.toUpperCase());
+
+        return solicitudRepository.findByEstadoOrderByIdDesc(estadoSolicitud)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
     public String revisarSolicitud(Long id, SolicitudRevisionRequest request) {
         Solicitud solicitud = solicitudRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));

@@ -16,11 +16,14 @@ public class ProveedorService {
 
     private final ProveedorRepository proveedorRepository;
     private final SunatClient sunatClient;
+    private final AuditoriaService auditoriaService;
 
     public ProveedorService(ProveedorRepository proveedorRepository,
-                            SunatClient sunatClient) {
+                            SunatClient sunatClient,
+                            AuditoriaService auditoriaService) {
         this.proveedorRepository = proveedorRepository;
         this.sunatClient = sunatClient;
+        this.auditoriaService = auditoriaService;
     }
 
     public String crearProveedor(ProveedorRequest request) {
@@ -46,6 +49,13 @@ public class ProveedorService {
 
         proveedorRepository.save(proveedor);
 
+        auditoriaService.registrar(
+                "PROVEEDORES",
+                "CREAR PROVEEDOR",
+                "Se registró el proveedor " + proveedor.getRazonSocial()
+                        + " con RUC " + proveedor.getRuc()
+        );
+
         return "Proveedor registrado correctamente con datos de SUNAT";
     }
 
@@ -60,6 +70,14 @@ public class ProveedorService {
 
         proveedorRepository.save(proveedor);
 
+        auditoriaService.registrar(
+                "PROVEEDORES",
+                "EDITAR PROVEEDOR",
+                "Se editó el proveedor ID " + id
+                        + " con RUC " + proveedor.getRuc()
+                        + " - " + proveedor.getRazonSocial()
+        );
+
         return "Proveedor actualizado correctamente";
     }
 
@@ -71,12 +89,35 @@ public class ProveedorService {
 
         proveedorRepository.save(proveedor);
 
+        auditoriaService.registrar(
+                "PROVEEDORES",
+                "DESACTIVAR PROVEEDOR",
+                "Se desactivó el proveedor ID " + id
+                        + " con RUC " + proveedor.getRuc()
+                        + " - " + proveedor.getRazonSocial()
+        );
+
         return "Proveedor desactivado correctamente";
     }
 
     public List<ProveedorResponse> listarProveedores() {
 
         return proveedorRepository.findAll()
+                .stream()
+                .map(p -> new ProveedorResponse(
+                        p.getId(),
+                        p.getRuc(),
+                        p.getRazonSocial(),
+                        p.getTipoProducto(),
+                        p.getEstado().name(),
+                        p.getObservacion(),
+                        p.isActivo()
+                ))
+                .toList();
+    }
+
+    public List<ProveedorResponse> filtrarProveedoresPorEstado(boolean activo) {
+        return proveedorRepository.findByActivo(activo)
                 .stream()
                 .map(p -> new ProveedorResponse(
                         p.getId(),

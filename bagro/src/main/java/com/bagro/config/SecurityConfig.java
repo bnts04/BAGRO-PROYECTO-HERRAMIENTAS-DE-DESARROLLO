@@ -28,6 +28,8 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/register").permitAll()
 
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/auditorias/**").hasRole("ADMIN")
                         // MENU
                         .requestMatchers("/api/menu").hasRole("ADMIN")
 

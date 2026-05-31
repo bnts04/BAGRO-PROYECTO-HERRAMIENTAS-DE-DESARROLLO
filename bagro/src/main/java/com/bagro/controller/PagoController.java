@@ -62,4 +62,19 @@ public class PagoController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
     }
+
+    @GetMapping("/filtrar")
+    @PreAuthorize("hasAnyRole('ADMIN','RRHH')")
+    public List<PagoResponse> filtrarPagosPorMesAnio(
+            @RequestParam Integer mes,
+            @RequestParam Integer anio
+    ) {
+        return pagoService.filtrarPagosPorMesAnio(mes, anio);
+    }
+
+    @PatchMapping("/{id}/anular")
+    @PreAuthorize("hasAnyRole('ADMIN','RRHH')")
+    public String anularPago(@PathVariable Long id) {
+        return pagoService.anularPago(id);
+    }
 }

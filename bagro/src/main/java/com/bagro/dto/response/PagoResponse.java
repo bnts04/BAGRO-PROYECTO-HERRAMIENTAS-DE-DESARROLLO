@@ -18,4 +18,5 @@ public class PagoResponse {
     private Double totalNeto;
     private String empleado;
     private String dni;
+    private String estadoPago;
 }

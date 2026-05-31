@@ -72,4 +72,10 @@ public class CompraController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
     }
+
+    @PatchMapping("/{id}/anular")
+    @PreAuthorize("hasAnyRole('ADMIN','COMPRAS')")
+    public String anularCompra(@PathVariable Long id) {
+        return compraService.anularCompra(id);
+    }
 }

@@ -4,6 +4,7 @@ import com.bagro.dto.request.PagoRequest;
 import com.bagro.dto.response.PagoResponse;
 import com.bagro.dto.response.PlanillaKpiResponse;
 import com.bagro.entity.Empleado;
+import com.bagro.entity.EstadoPago;
 import com.bagro.entity.Pago;
 import com.bagro.repository.EmpleadoRepository;
 import com.bagro.repository.PagoRepository;
@@ -20,10 +21,14 @@ public class PagoService {
 
     private final PagoRepository pagoRepository;
     private final EmpleadoRepository empleadoRepository;
+    private final AuditoriaService auditoriaService;
 
-    public PagoService(PagoRepository pagoRepository, EmpleadoRepository empleadoRepository) {
+    public PagoService(PagoRepository pagoRepository,
+                       EmpleadoRepository empleadoRepository,
+                       AuditoriaService auditoriaService) {
         this.pagoRepository = pagoRepository;
         this.empleadoRepository = empleadoRepository;
+        this.auditoriaService = auditoriaService;
     }
 
     public String crearPago(String username, PagoRequest request) {
@@ -53,10 +58,19 @@ public class PagoService {
                 .bonos(request.getBonos())
                 .descuentos(request.getDescuentos())
                 .totalNeto(totalNeto)
+                .estado(EstadoPago.PAGADO)
                 .empleado(empleado)
                 .build();
 
         pagoRepository.save(pago);
+
+        auditoriaService.registrar(
+                "PAGOS",
+                "REGISTRAR PAGO",
+                "Se registró un pago para el trabajador DNI " + empleado.getDni()
+                        + " correspondiente al mes " + mesPago + "/" + anioPago
+                        + " por un total neto de S/ " + totalNeto
+        );
 
         return "Pago registrado correctamente";
     }
@@ -89,7 +103,19 @@ public class PagoService {
         pago.setDescuentos(descuentos);
         pago.setTotalNeto(totalNeto);
 
+        if (pago.getEstado() == null) {
+            pago.setEstado(EstadoPago.PAGADO);
+        }
+
         pagoRepository.save(pago);
+
+        auditoriaService.registrar(
+                "PAGOS",
+                "EDITAR PAGO",
+                "Se editó el pago ID " + id
+                        + " del trabajador DNI " + empleado.getDni()
+                        + " correspondiente al mes " + mesPago + "/" + anioPago
+        );
 
         return "Pago actualizado correctamente";
     }
@@ -100,17 +126,7 @@ public class PagoService {
 
         return pagoRepository.findByEmpleado(empleado)
                 .stream()
-                .map(p -> new PagoResponse(
-                        p.getId(),
-                        p.getFecha().toString(),
-                        p.getSueldoBase(),
-                        p.getHorasExtra(),
-                        p.getBonos(),
-                        p.getDescuentos(),
-                        p.getTotalNeto(),
-                        p.getEmpleado().getNombres() + " " + p.getEmpleado().getApellidos(),
-                        p.getEmpleado().getDni()
-                ))
+                .map(this::mapToResponse)
                 .toList();
     }
 
@@ -169,5 +185,45 @@ public class PagoService {
                 pagosATiempo,
                 pagosFueraDeTiempo
         );
+    }
+
+    public List<PagoResponse> filtrarPagosPorMesAnio(Integer mes, Integer anio) {
+        return pagoRepository.findByMesAndAnio(mes, anio)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    private PagoResponse mapToResponse(Pago p) {
+        return new PagoResponse(
+                p.getId(),
+                p.getFecha().toString(),
+                p.getSueldoBase(),
+                p.getHorasExtra(),
+                p.getBonos(),
+                p.getDescuentos(),
+                p.getTotalNeto(),
+                p.getEmpleado().getNombres() + " " + p.getEmpleado().getApellidos(),
+                p.getEmpleado().getDni(),
+                p.getEstado() != null ? p.getEstado().name() : "PAGADO"
+        );
+    }
+
+    public String anularPago(Long id) {
+        Pago pago = pagoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pago no encontrado"));
+
+        pago.setEstado(EstadoPago.ANULADO);
+
+        pagoRepository.save(pago);
+
+        auditoriaService.registrar(
+                "PAGOS",
+                "ANULAR PAGO",
+                "Se anuló el pago ID " + id
+                        + " del trabajador DNI " + pago.getEmpleado().getDni()
+        );
+
+        return "Pago anulado correctamente";
     }
 }
