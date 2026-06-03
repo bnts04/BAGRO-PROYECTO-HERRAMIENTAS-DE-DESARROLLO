@@ -67,8 +67,10 @@ public class CompraController {
     public ResponseEntity<byte[]> generarComprobanteCompra(@PathVariable Long id) {
         byte[] pdf = compraPdfService.generarComprobanteCompra(id);
 
+        String filename = compraPdfService.generarNombreArchivoComprobante(id);
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=comprobante-compra-" + id + ".pdf")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
     }
