@@ -11,5 +11,13 @@ public class CompraRequest {
 
     private Long proveedorId;
 
+    private String fechaCompra;
+
+    private String tipoComprobante;
+
+    private String numeroComprobante;
+
+    private String observacion;
+
     private List<DetalleCompraRequest> productos;
 }

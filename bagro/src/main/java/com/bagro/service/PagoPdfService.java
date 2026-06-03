@@ -8,6 +8,7 @@ import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.apache.commons.io.IOUtils;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
@@ -91,7 +92,7 @@ public class PagoPdfService {
             ClassPathResource logoResource = new ClassPathResource("static/img/bagro-logo.png");
 
             if (logoResource.exists()) {
-                Image logo = Image.getInstance(logoResource.getInputStream().readAllBytes());
+                Image logo = Image.getInstance(IOUtils.toByteArray(logoResource.getInputStream()));
                 logo.scaleToFit(210, 120);
                 logo.setAlignment(Image.ALIGN_LEFT);
                 logoCell.addElement(logo);

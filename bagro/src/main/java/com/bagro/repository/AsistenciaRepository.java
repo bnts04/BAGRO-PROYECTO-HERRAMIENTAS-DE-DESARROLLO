@@ -17,4 +17,6 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
     List<Asistencia> findByEmpleadoAndFechaBetween(Empleado empleado, LocalDate desde, LocalDate hasta);
 
     List<Asistencia> findByFechaOrderByIdDesc(LocalDate fecha);
+
+    List<Asistencia> findByFechaBetweenOrderByFechaDesc(LocalDate desde, LocalDate hasta);
 }

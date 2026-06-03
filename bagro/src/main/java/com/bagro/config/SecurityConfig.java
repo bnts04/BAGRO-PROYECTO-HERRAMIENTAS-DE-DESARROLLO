@@ -30,6 +30,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/auditorias/**").hasRole("ADMIN")
+                        .requestMatchers("/api/reportes/**").hasAnyRole("ADMIN", "RRHH", "COMPRAS")
                         // MENU
                         .requestMatchers("/api/menu").hasRole("ADMIN")
 

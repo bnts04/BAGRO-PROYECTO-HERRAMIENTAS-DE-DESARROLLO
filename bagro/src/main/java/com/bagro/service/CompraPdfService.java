@@ -2,18 +2,26 @@ package com.bagro.service;
 
 import com.bagro.entity.Compra;
 import com.bagro.entity.DetalleCompra;
+import com.bagro.entity.EstadoCompra;
 import com.bagro.repository.CompraRepository;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
+import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
+import java.util.Locale;
 
 @Service
 public class CompraPdfService {
+
+    private static final String EMPRESA_NOMBRE = "BAGRO S.A.C.";
+    private static final String EMPRESA_RUC = "20501234567";
+    private static final String EMPRESA_SISTEMA = "Sistema Agroindustrial BAGRO";
+    private static final String AREA_EMISORA = "Compras / Administración";
 
     private final CompraRepository compraRepository;
 
@@ -28,7 +36,7 @@ public class CompraPdfService {
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-            Document document = new Document(PageSize.A4, 45, 45, 35, 35);
+            Document document = new Document(PageSize.A4, 45, 45, 30, 30);
             PdfWriter.getInstance(document, outputStream);
 
             document.open();
@@ -38,9 +46,18 @@ public class CompraPdfService {
             Font textoFont = new Font(Font.HELVETICA, 10, Font.NORMAL, Color.BLACK);
             Font headerFont = new Font(Font.HELVETICA, 10, Font.BOLD, Color.WHITE);
             Font totalFont = new Font(Font.HELVETICA, 12, Font.BOLD, new Color(0, 90, 30));
+            Font alertaFont = new Font(Font.HELVETICA, 13, Font.BOLD, Color.WHITE);
 
-            agregarEncabezado(document, tituloFont, textoFont);
+            agregarEncabezado(document, compra, tituloFont, textoFont);
             agregarSeparador(document);
+
+            if (compra.getEstado() == EstadoCompra.ANULADA) {
+                agregarAvisoAnulado(document, alertaFont);
+            }
+
+            agregarDatosEmpresa(document, subtituloFont, textoFont);
+
+            document.add(new Paragraph(" "));
 
             agregarDatosProveedor(document, compra, subtituloFont, textoFont);
 
@@ -52,7 +69,6 @@ public class CompraPdfService {
 
             agregarDetalleProductos(document, compra, subtituloFont, headerFont, textoFont, totalFont);
 
-            document.add(new Paragraph(" "));
             document.add(new Paragraph(" "));
 
             agregarPie(document, textoFont);
@@ -66,10 +82,36 @@ public class CompraPdfService {
         }
     }
 
-    private void agregarEncabezado(Document document, Font tituloFont, Font textoFont) throws Exception {
+    public String generarNombreArchivoComprobante(Long compraId) {
+        Compra compra = compraRepository.findById(compraId)
+                .orElseThrow(() -> new RuntimeException("Compra no encontrada"));
+
+        String tipo = compra.getTipoComprobante() != null ? compra.getTipoComprobante() : "COMPROBANTE";
+        String numero = compra.getNumeroComprobante() != null ? compra.getNumeroComprobante() : "SIN-NUMERO";
+
+        String nombre = "comprobante-compra-" + tipo + "-" + numero + "-BAGRO.pdf";
+
+        return limpiarNombreArchivo(nombre);
+    }
+
+    private String limpiarNombreArchivo(String nombre) {
+        return nombre
+                .replace(" ", "-")
+                .replace("/", "-")
+                .replace("\\", "-")
+                .replace(":", "-")
+                .replace("*", "-")
+                .replace("?", "-")
+                .replace("\"", "")
+                .replace("<", "")
+                .replace(">", "")
+                .replace("|", "");
+    }
+
+    private void agregarEncabezado(Document document, Compra compra, Font tituloFont, Font textoFont) throws Exception {
         PdfPTable header = new PdfPTable(2);
         header.setWidthPercentage(100);
-        header.setWidths(new float[]{45, 55});
+        header.setWidths(new float[]{42, 58});
 
         PdfPCell logoCell = new PdfPCell();
         logoCell.setBorder(Rectangle.NO_BORDER);
@@ -79,8 +121,8 @@ public class CompraPdfService {
             ClassPathResource logoResource = new ClassPathResource("static/img/bagro-logo.png");
 
             if (logoResource.exists()) {
-                Image logo = Image.getInstance(logoResource.getInputStream().readAllBytes());
-                logo.scaleToFit(210, 120);
+                Image logo = Image.getInstance(IOUtils.toByteArray(logoResource.getInputStream()));
+                logo.scaleToFit(170, 90);
                 logo.setAlignment(Image.ALIGN_LEFT);
                 logoCell.addElement(logo);
             } else {
@@ -101,13 +143,21 @@ public class CompraPdfService {
         Paragraph subtitulo = new Paragraph("Sistema Agroindustrial", textoFont);
         subtitulo.setAlignment(Element.ALIGN_RIGHT);
 
-        Paragraph documento = new Paragraph("COMPROBANTE DE COMPRA", new Font(Font.HELVETICA, 16, Font.BOLD));
+        Paragraph documento = new Paragraph("COMPROBANTE INTERNO DE COMPRA", new Font(Font.HELVETICA, 15, Font.BOLD));
         documento.setAlignment(Element.ALIGN_RIGHT);
         documento.setSpacingBefore(8);
+
+        Paragraph comprobante = new Paragraph(
+                obtenerTextoComprobante(compra),
+                new Font(Font.HELVETICA, 10, Font.BOLD, new Color(0, 90, 30))
+        );
+        comprobante.setAlignment(Element.ALIGN_RIGHT);
+        comprobante.setSpacingBefore(5);
 
         infoCell.addElement(empresa);
         infoCell.addElement(subtitulo);
         infoCell.addElement(documento);
+        infoCell.addElement(comprobante);
 
         header.addCell(logoCell);
         header.addCell(infoCell);
@@ -115,11 +165,17 @@ public class CompraPdfService {
         document.add(header);
     }
 
+    private String obtenerTextoComprobante(Compra compra) {
+        String tipo = compra.getTipoComprobante() != null ? compra.getTipoComprobante() : "-";
+        String numero = compra.getNumeroComprobante() != null ? compra.getNumeroComprobante() : "-";
+        return tipo + " N.° " + numero;
+    }
+
     private void agregarSeparador(Document document) throws Exception {
         PdfPTable linea = new PdfPTable(1);
         linea.setWidthPercentage(100);
-        linea.setSpacingBefore(10);
-        linea.setSpacingAfter(15);
+        linea.setSpacingBefore(8);
+        linea.setSpacingAfter(12);
 
         PdfPCell cell = new PdfPCell();
         cell.setBorder(Rectangle.BOTTOM);
@@ -131,6 +187,37 @@ public class CompraPdfService {
         document.add(linea);
     }
 
+    private void agregarAvisoAnulado(Document document, Font alertaFont) throws Exception {
+        PdfPTable tabla = new PdfPTable(1);
+        tabla.setWidthPercentage(100);
+        tabla.setSpacingAfter(12);
+
+        PdfPCell cell = new PdfPCell(new Phrase("DOCUMENTO ANULADO", alertaFont));
+        cell.setBackgroundColor(new Color(180, 0, 0));
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setPadding(8);
+
+        tabla.addCell(cell);
+        document.add(tabla);
+    }
+
+    private void agregarDatosEmpresa(Document document, Font subtituloFont, Font textoFont) throws Exception {
+        document.add(new Paragraph("DATOS DE LA EMPRESA", subtituloFont));
+
+        PdfPTable tabla = new PdfPTable(2);
+        tabla.setWidthPercentage(100);
+        tabla.setSpacingBefore(8);
+        tabla.setWidths(new float[]{30, 70});
+
+        agregarFilaSimple(tabla, "Empresa", EMPRESA_NOMBRE, textoFont);
+        agregarFilaSimple(tabla, "RUC", EMPRESA_RUC, textoFont);
+        agregarFilaSimple(tabla, "Sistema", EMPRESA_SISTEMA, textoFont);
+        agregarFilaSimple(tabla, "Área emisora", AREA_EMISORA, textoFont);
+        agregarFilaSimple(tabla, "Fecha de emisión", String.valueOf(LocalDate.now()), textoFont);
+
+        document.add(tabla);
+    }
+
     private void agregarDatosProveedor(Document document, Compra compra, Font subtituloFont, Font textoFont) throws Exception {
         document.add(new Paragraph("DATOS DEL PROVEEDOR", subtituloFont));
 
@@ -139,11 +226,11 @@ public class CompraPdfService {
         tabla.setSpacingBefore(8);
         tabla.setWidths(new float[]{30, 70});
 
-        agregarFilaSimple(tabla, "RUC", compra.getProveedor().getRuc(), textoFont);
-        agregarFilaSimple(tabla, "Razón social", compra.getProveedor().getRazonSocial(), textoFont);
-        agregarFilaSimple(tabla, "Tipo de producto", compra.getProveedor().getTipoProducto(), textoFont);
-        agregarFilaSimple(tabla, "Estado", compra.getProveedor().getEstado().name(), textoFont);
-        agregarFilaSimple(tabla, "Observación", compra.getProveedor().getObservacion(), textoFont);
+        agregarFilaSimple(tabla, "RUC", compra.getProveedor() != null ? compra.getProveedor().getRuc() : "-", textoFont);
+        agregarFilaSimple(tabla, "Razón social", compra.getProveedor() != null ? compra.getProveedor().getRazonSocial() : "-", textoFont);
+        agregarFilaSimple(tabla, "Tipo de producto", compra.getProveedor() != null ? compra.getProveedor().getTipoProducto() : "-", textoFont);
+        agregarFilaSimple(tabla, "Estado proveedor", compra.getProveedor() != null && compra.getProveedor().getEstado() != null ? compra.getProveedor().getEstado().name() : "-", textoFont);
+        agregarFilaSimple(tabla, "Observación proveedor", compra.getProveedor() != null ? compra.getProveedor().getObservacion() : "-", textoFont);
 
         document.add(tabla);
     }
@@ -157,14 +244,22 @@ public class CompraPdfService {
         tabla.setWidths(new float[]{30, 70});
 
         agregarFilaSimple(tabla, "Código de compra", String.valueOf(compra.getId()), textoFont);
-        agregarFilaSimple(tabla, "Fecha de compra", String.valueOf(compra.getFecha()), textoFont);
-        agregarFilaSimple(tabla, "Fecha de emisión", String.valueOf(LocalDate.now()), textoFont);
-        agregarFilaSimple(tabla, "Cantidad de productos", String.valueOf(compra.getDetalles().size()), textoFont);
+        agregarFilaSimple(tabla, "Fecha de compra", compra.getFecha() != null ? compra.getFecha().toString() : "-", textoFont);
+        agregarFilaSimple(tabla, "Tipo de comprobante", compra.getTipoComprobante(), textoFont);
+        agregarFilaSimple(tabla, "Número de comprobante", compra.getNumeroComprobante(), textoFont);
+        agregarFilaSimple(tabla, "Estado de compra", compra.getEstado() != null ? compra.getEstado().name() : "REGISTRADA", textoFont);
+        agregarFilaSimple(tabla, "Cantidad de productos", compra.getDetalles() != null ? String.valueOf(compra.getDetalles().size()) : "0", textoFont);
+        agregarFilaSimple(tabla, "Observación de compra", compra.getObservacion(), textoFont);
 
         document.add(tabla);
     }
 
-    private void agregarDetalleProductos(Document document, Compra compra, Font subtituloFont, Font headerFont, Font textoFont, Font totalFont) throws Exception {
+    private void agregarDetalleProductos(Document document,
+                                         Compra compra,
+                                         Font subtituloFont,
+                                         Font headerFont,
+                                         Font textoFont,
+                                         Font totalFont) throws Exception {
         document.add(new Paragraph("DETALLE DE PRODUCTOS", subtituloFont));
 
         PdfPTable tabla = new PdfPTable(4);
@@ -177,32 +272,58 @@ public class CompraPdfService {
         agregarHeader(tabla, "Precio unit.", headerFont);
         agregarHeader(tabla, "Subtotal", headerFont);
 
-        for (DetalleCompra detalle : compra.getDetalles()) {
-            agregarCelda(tabla, detalle.getNombreProducto(), textoFont, Element.ALIGN_LEFT);
-            agregarCelda(tabla, String.valueOf(detalle.getCantidad()), textoFont, Element.ALIGN_CENTER);
-            agregarCelda(tabla, "S/ " + formatoMonto(detalle.getPrecioUnitario()), textoFont, Element.ALIGN_RIGHT);
-            agregarCelda(tabla, "S/ " + formatoMonto(detalle.getSubtotal()), textoFont, Element.ALIGN_RIGHT);
+        if (compra.getDetalles() != null) {
+            for (DetalleCompra detalle : compra.getDetalles()) {
+                agregarCelda(tabla, detalle.getNombreProducto(), textoFont, Element.ALIGN_LEFT);
+                agregarCelda(tabla, String.valueOf(detalle.getCantidad()), textoFont, Element.ALIGN_CENTER);
+                agregarCelda(tabla, "S/ " + formatoMonto(detalle.getPrecioUnitario()), textoFont, Element.ALIGN_RIGHT);
+                agregarCelda(tabla, "S/ " + formatoMonto(detalle.getSubtotal()), textoFont, Element.ALIGN_RIGHT);
+            }
         }
 
-        PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL COMPRA", totalFont));
-        totalLabel.setColspan(3);
-        totalLabel.setPadding(8);
-        totalLabel.setBackgroundColor(new Color(230, 245, 230));
-        tabla.addCell(totalLabel);
+        agregarFilaResumen(tabla, "SUBTOTAL", compra.getSubtotal(), totalFont);
+        agregarFilaResumen(tabla, "IGV (18%)", compra.getIgv(), totalFont);
+        agregarFilaResumenFinal(tabla, "TOTAL COMPRA", compra.getTotal(), totalFont);
 
-        PdfPCell totalValue = new PdfPCell(new Phrase("S/ " + formatoMonto(compra.getTotal()), totalFont));
-        totalValue.setPadding(8);
-        totalValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        totalValue.setBackgroundColor(new Color(230, 245, 230));
-        tabla.addCell(totalValue);
-
+        tabla.setKeepTogether(true);
         document.add(tabla);
+    }
+
+    private void agregarFilaResumen(PdfPTable tabla, String label, Double monto, Font font) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, font));
+        labelCell.setColspan(3);
+        labelCell.setPadding(8);
+        labelCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        labelCell.setBackgroundColor(new Color(245, 245, 245));
+        tabla.addCell(labelCell);
+
+        PdfPCell valueCell = new PdfPCell(new Phrase("S/ " + formatoMonto(monto), font));
+        valueCell.setPadding(8);
+        valueCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        valueCell.setBackgroundColor(new Color(245, 245, 245));
+        tabla.addCell(valueCell);
+    }
+
+    private void agregarFilaResumenFinal(PdfPTable tabla, String label, Double monto, Font font) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, font));
+        labelCell.setColspan(3);
+        labelCell.setPadding(9);
+        labelCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        labelCell.setBackgroundColor(new Color(230, 245, 230));
+        tabla.addCell(labelCell);
+
+        PdfPCell valueCell = new PdfPCell(new Phrase("S/ " + formatoMonto(monto), font));
+        valueCell.setPadding(9);
+        valueCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        valueCell.setBackgroundColor(new Color(230, 245, 230));
+        tabla.addCell(valueCell);
     }
 
     private void agregarPie(Document document, Font textoFont) throws Exception {
         PdfPTable firmas = new PdfPTable(2);
         firmas.setWidthPercentage(100);
         firmas.setWidths(new float[]{50, 50});
+        firmas.setSpacingBefore(15);
 
         PdfPCell compras = new PdfPCell(new Phrase("____________________________\nÁrea de Compras", textoFont));
         compras.setBorder(Rectangle.NO_BORDER);
@@ -236,7 +357,7 @@ public class CompraPdfService {
         c1.setBackgroundColor(new Color(245, 245, 245));
         tabla.addCell(c1);
 
-        PdfPCell c2 = new PdfPCell(new Phrase(valor != null ? valor : "-", font));
+        PdfPCell c2 = new PdfPCell(new Phrase(valor != null && !valor.isBlank() ? valor : "-", font));
         c2.setPadding(6);
         tabla.addCell(c2);
     }
@@ -249,6 +370,6 @@ public class CompraPdfService {
     }
 
     private String formatoMonto(Double monto) {
-        return String.format("%.2f", monto != null ? monto : 0.0);
+        return String.format(Locale.US, "%.2f", monto != null ? monto : 0.0);
     }
 }

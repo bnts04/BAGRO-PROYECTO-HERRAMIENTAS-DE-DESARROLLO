@@ -9,4 +9,8 @@ import java.util.List;
 public interface CompraRepository extends JpaRepository<Compra, Long> {
 
     List<Compra> findByFechaBetween(LocalDate desde, LocalDate hasta);
+
+    List<Compra> findAllByOrderByFechaDesc();
+
+    boolean existsByTipoComprobanteAndNumeroComprobante(String tipoComprobante, String numeroComprobante);
 }
