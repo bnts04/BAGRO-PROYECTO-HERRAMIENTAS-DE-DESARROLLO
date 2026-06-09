@@ -5,6 +5,8 @@ import com.bagro.dto.response.EmpleadoResponse;
 import com.bagro.service.EmpleadoService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.bagro.dto.response.EmpleadoResponse;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -42,9 +44,21 @@ public class EmpleadoController {
         return empleadoService.desactivarEmpleado(id);
     }
 
+    @PatchMapping("/{id}/activar")
+    @PreAuthorize("hasAnyRole('ADMIN','RRHH')")
+    public String activarEmpleado(@PathVariable Long id) {
+        return empleadoService.activarEmpleado(id);
+    }
+
     @GetMapping("/filtrar")
     @PreAuthorize("hasAnyRole('ADMIN','RRHH')")
     public List<EmpleadoResponse> filtrarEmpleadosPorEstado(@RequestParam boolean activo) {
         return empleadoService.filtrarEmpleadosPorEstado(activo);
+    }
+
+    @GetMapping("/mi-perfil")
+    @PreAuthorize("hasRole('TRABAJADOR')")
+    public EmpleadoResponse miPerfil(Authentication authentication) {
+        return empleadoService.miPerfil(authentication.getName());
     }
 }

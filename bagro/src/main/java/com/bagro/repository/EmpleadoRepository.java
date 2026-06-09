@@ -12,5 +12,7 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Long> {
 
     Optional<Empleado> findByUserUsername(String username);
 
+    Optional<Empleado> findByDni(String dni);
+
     List<Empleado> findByActivo(boolean activo);
 }

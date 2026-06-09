@@ -15,4 +15,6 @@ public class PagoRequest {
     // Mes y año al que corresponde el pago
     private Integer mes;
     private Integer anio;
+
+    private String dni;
 }

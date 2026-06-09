@@ -128,6 +128,28 @@ public class EmpleadoService {
         return "Empleado desactivado correctamente";
     }
 
+    public String activarEmpleado(Long id) {
+        Empleado empleado = empleadoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+
+        empleado.setActivo(true);
+
+        if (empleado.getUser() != null) {
+            empleado.getUser().setActive(true);
+            userRepository.save(empleado.getUser());
+        }
+
+        empleadoRepository.save(empleado);
+
+        auditoriaService.registrar(
+                "EMPLEADOS",
+                "ACTIVAR EMPLEADO",
+                "Se activó el empleado ID " + id + " con DNI " + empleado.getDni()
+        );
+
+        return "Empleado activado correctamente";
+    }
+
     public List<EmpleadoResponse> listarEmpleados() {
         return empleadoRepository.findAll()
                 .stream()
@@ -160,5 +182,22 @@ public class EmpleadoService {
                         e.getUser() != null ? e.getUser().getUsername() : null
                 ))
                 .toList();
+    }
+
+    public EmpleadoResponse miPerfil(String username) {
+        Empleado empleado = empleadoRepository.findByUserUsername(username)
+                .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+
+        return new EmpleadoResponse(
+                empleado.getId(),
+                empleado.getDni(),
+                empleado.getNombres(),
+                empleado.getApellidos(),
+                empleado.getCargo(),
+                empleado.getArea(),
+                empleado.getSueldoBase(),
+                empleado.isActivo(),
+                empleado.getUser() != null ? empleado.getUser().getUsername() : null
+        );
     }
 }

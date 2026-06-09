@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,14 +28,14 @@ public class PagoController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','RRHH')")
-    public String crearPago(@RequestBody PagoRequest request, @RequestParam String username) {
-        return pagoService.crearPago(username, request);
+    public String crearPago(@RequestBody PagoRequest request, Authentication authentication) {
+        return pagoService.crearPago(authentication.getName(), request);
     }
 
     @GetMapping("/trabajador")
     @PreAuthorize("hasRole('TRABAJADOR')")
-    public List<PagoResponse> listarPagos(@RequestParam String username) {
-        return pagoService.listarPagos(username);
+    public List<PagoResponse> listarPagos(Authentication authentication) {
+        return pagoService.listarPagos(authentication.getName());
     }
 
     @GetMapping("/kpis/planilla")

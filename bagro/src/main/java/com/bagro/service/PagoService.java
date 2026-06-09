@@ -32,8 +32,17 @@ public class PagoService {
     }
 
     public String crearPago(String username, PagoRequest request) {
-        Empleado empleado = empleadoRepository.findByUserUsername(username)
+
+        if (request.getDni() == null || request.getDni().isBlank()) {
+            throw new RuntimeException("Debe ingresar el DNI del trabajador");
+        }
+
+        Empleado empleado = empleadoRepository.findByDni(request.getDni())
                 .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+
+        if (!empleado.isActivo()) {
+            throw new RuntimeException("No se puede registrar pago a un trabajador inactivo");
+        }
 
         LocalDate hoy = LocalDate.now();
 
@@ -44,19 +53,28 @@ public class PagoService {
             throw new RuntimeException("Ya existe un pago registrado para este trabajador en ese mes y año");
         }
 
-        Double totalNeto = request.getSueldoBase()
-                + (request.getHorasExtra() != null ? request.getHorasExtra() : 0)
-                + (request.getBonos() != null ? request.getBonos() : 0)
-                - (request.getDescuentos() != null ? request.getDescuentos() : 0);
+        Double sueldoBase = request.getSueldoBase() != null
+                ? request.getSueldoBase()
+                : empleado.getSueldoBase();
+
+        if (sueldoBase == null) {
+            throw new RuntimeException("El trabajador no tiene sueldo base registrado");
+        }
+
+        Double horasExtra = request.getHorasExtra() != null ? request.getHorasExtra() : 0.0;
+        Double bonos = request.getBonos() != null ? request.getBonos() : 0.0;
+        Double descuentos = request.getDescuentos() != null ? request.getDescuentos() : 0.0;
+
+        Double totalNeto = sueldoBase + horasExtra + bonos - descuentos;
 
         Pago pago = Pago.builder()
                 .fecha(hoy)
                 .mes(mesPago)
                 .anio(anioPago)
-                .sueldoBase(request.getSueldoBase())
-                .horasExtra(request.getHorasExtra())
-                .bonos(request.getBonos())
-                .descuentos(request.getDescuentos())
+                .sueldoBase(sueldoBase)
+                .horasExtra(horasExtra)
+                .bonos(bonos)
+                .descuentos(descuentos)
                 .totalNeto(totalNeto)
                 .estado(EstadoPago.PAGADO)
                 .empleado(empleado)
@@ -67,7 +85,7 @@ public class PagoService {
         auditoriaService.registrar(
                 "PAGOS",
                 "REGISTRAR PAGO",
-                "Se registró un pago para el trabajador DNI " + empleado.getDni()
+                "El usuario " + username + " registró un pago para el trabajador DNI " + empleado.getDni()
                         + " correspondiente al mes " + mesPago + "/" + anioPago
                         + " por un total neto de S/ " + totalNeto
         );
